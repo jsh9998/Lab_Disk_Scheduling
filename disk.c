@@ -72,7 +72,42 @@ struct RCB handle_request_arrival_sstf(struct RCB request_queue[QUEUEMAX], int *
 };
 struct RCB handle_request_completion_sstf(struct RCB request_queue[QUEUEMAX], int *queue_cnt, int current_cylinder)
 {
-    return createNullRCB();
+    if (*queue_cnt == 0)
+    {
+        return createNullRCB();
+    }
+
+    int next = 0;
+    int next_cylinder_distance = abs(request_queue[0].cylinder - current_cylinder);
+    int next_at = request_queue[0].arrival_timestamp;
+    for (int x = 1; x < *queue_cnt; x++)
+    {
+        int current_cylinder_distance = abs(request_queue[x].cylinder - current_cylinder);
+        if (current_cylinder_distance == next_cylinder_distance)
+        {
+            if (request_queue[x].arrival_timestamp < next_at)
+            {
+                next = x;
+                next_cylinder_distance = current_cylinder_distance;
+                next_at = request_queue[x].arrival_timestamp;
+            }
+        }
+        else if (current_cylinder_distance < next_cylinder_distance)
+        {
+            next = x;
+            next_cylinder_distance = current_cylinder_distance;
+            next_at = request_queue[x].arrival_timestamp;
+        }
+    }
+
+    struct RCB next_rcb = request_queue[next];
+    for (int x = next; x < (*queue_cnt) - 1; x++)
+    {
+        request_queue[x] = request_queue[x + 1];
+    }
+    (*queue_cnt)--;
+
+    return next_rcb;
 };
 struct RCB handle_request_arrival_look(struct RCB request_queue[QUEUEMAX], int *queue_cnt, struct RCB current_request, struct RCB new_request, int timestamp)
 {
@@ -87,5 +122,34 @@ struct RCB handle_request_arrival_look(struct RCB request_queue[QUEUEMAX], int *
 };
 struct RCB handle_request_completion_look(struct RCB request_queue[QUEUEMAX], int *queue_cnt, int current_cylinder, int scan_direction)
 {
-    return createNullRCB();
+    int n1 = -1;
+    if (*queue_cnt == 0)
+    {
+        return createNullRCB();
+    }
+
+    if (scan_direction == 1)
+    {
+        n1 = find_next_rcb_up(request_queue, *queue_cnt, current_cylinder);
+        if (n1 == -1)
+        {
+            n1 = find_next_rcb_down(request_queue, *queue_cnt, current_cylinder);
+        }
+    }
+    else
+    {
+        n1 = find_next_rcb_down(request_queue, *queue_cnt, current_cylinder);
+        if (n1 == -1)
+        {
+            n1 = find_next_rcb_up(request_queue, *queue_cnt, current_cylinder);
+        }
+    }
+
+    struct RCB next_rcb = request_queue[n1];
+    for (int x = n1; x < (*queue_cnt) - 1; x++)
+    {
+        request_queue[x] = request_queue[x + 1];
+    }
+    (*queue_cnt)--;
+    return next_rcb;
 };
