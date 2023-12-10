@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "oslabs.h"
 #define TRUE 1
 #define FALSE 0
