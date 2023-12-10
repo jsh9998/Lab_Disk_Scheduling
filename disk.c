@@ -154,3 +154,86 @@ struct RCB handle_request_completion_look(struct RCB request_queue[QUEUEMAX], in
     (*queue_cnt)--;
     return next_rcb;
 };
+int find_next_rcb_up(struct RCB request_queue[QUEUEMAX], int queue_cnt, int current_cylinder)
+{
+    int next = -1;
+    int next_cylinder_distance = -1;
+    int next_at = -1;
+
+    for (int x = 0; x < queue_cnt; x++)
+    {
+        int replace_next = FALSE;
+        if (request_queue[x].cylinder >= current_cylinder)
+        {
+            if (next == -1)
+            {
+                replace_next = TRUE;
+            }
+            else
+            {
+                int current_cylinder_distance = request_queue[x].cylinder - current_cylinder;
+                if (current_cylinder_distance < next_cylinder_distance)
+                {
+                    replace_next = TRUE;
+                }
+                else if (current_cylinder_distance == next_cylinder_distance)
+                {
+                    if (request_queue[x].arrival_timestamp < next_at)
+                    {
+                        replace_next = TRUE;
+                    }
+                }
+            }
+            if (replace_next == TRUE)
+            {
+                next = x;
+                next_cylinder_distance = request_queue[x].cylinder - current_cylinder;
+                next_at = request_queue[x].arrival_timestamp;
+            }
+        }
+    }
+
+    return next;
+}
+
+int find_next_rcb_down(struct RCB request_queue[QUEUEMAX], int queue_cnt, int current_cylinder)
+{
+    int next = -1;
+    int next_cylinder_distance = -1;
+    int next_at = -1;
+
+    for (int x = 0; x < queue_cnt; x++)
+    {
+        int replace_next = FALSE;
+        if (request_queue[x].cylinder <= current_cylinder)
+        {
+            if (next == -1)
+            {
+                replace_next = TRUE;
+            }
+            else
+            {
+                int current_cylinder_distance = current_cylinder - request_queue[x].cylinder;
+                if (current_cylinder_distance < next_cylinder_distance)
+                {
+                    replace_next = TRUE;
+                }
+                else if (current_cylinder_distance == next_cylinder_distance)
+                {
+                    if (request_queue[x].arrival_timestamp < next_at)
+                    {
+                        replace_next = TRUE;
+                    }
+                }
+            }
+            if (replace_next == TRUE)
+            {
+                next = x;
+                next_cylinder_distance = current_cylinder - request_queue[x].cylinder;
+                next_at = request_queue[x].arrival_timestamp;
+            }
+        }
+    }
+
+    return next;
+}
